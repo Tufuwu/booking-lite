@@ -4,16 +4,15 @@ from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.db import get_db
-import services
+from app import services
 router = APIRouter(prefix="/admin")
-router = APIRouter()
 
 SESSION_EXPIRE = 7200  # 2小时
 
 @router.post("/login")
 async def admin_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response, db: Annotated[Session, Depends(get_db)]):
-    user = services.login(db, form_data.username, form_data.password)
-    if not user or user["type"] != "admin":
+    user = await services.login(db, form_data)
+    if not user or user["role"] != "admin":
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
     
     session_id = await services.auth.SessionService().create_session(user)

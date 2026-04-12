@@ -12,3 +12,13 @@ class AdminBase(BaseModel):
 
 class AdminCreate(AdminBase):
     password: Annotated[str, Field(strip_whitespace=True)]
+
+
+class AdminOut(AdminBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class AdminDelete(BaseModel):
+    password: Annotated[str, Field(strip_whitespace=True)]

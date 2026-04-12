@@ -11,7 +11,7 @@ class SessionService:
         session_id = secrets.token_urlsafe(32)
 
         data = {
-            "user_id": user["id"],
+            "user_id": user["job_number"],
             "role": user["role"],
             "created_at": int(time.time())
         }
