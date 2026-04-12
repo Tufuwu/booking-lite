@@ -1,0 +1,1 @@
+ROOM_NUMBER_REGEX = r'^[1-9]\d{2,3}$'

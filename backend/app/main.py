@@ -7,6 +7,7 @@ from app.db import engine, SessionLocal
 from app import core
 from app.api.routes.admin.auth import router as auth_router
 from app.api.routes.admin.admins import router as admin_router
+from app.api.routes.admin.room import router as room_router 
 from app.db import redis_client
 # from routers import (
 #     user_router,
@@ -57,3 +58,4 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(room_router)
