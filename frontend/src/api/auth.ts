@@ -1,5 +1,6 @@
 import { createFormBody, request } from "./http.js";
-import type { AdminCreatePayload, SessionUser } from "../types.js";
+import type { AdminCreatePayload, SessionUser, AdminUpdatePayload } from "../types.js";
+import axios from "axios";
 
 interface LoginResponse {
   msg: string;
@@ -31,19 +32,18 @@ export async function loginAdmin(username: string, password: string): Promise<Se
 }
 
 export async function createAdmin(payload: AdminCreatePayload): Promise<AdminResponse> {
-  return request<AdminResponse>("/admins/", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await axios.post<AdminResponse>("/admins/", payload);
+  return res.data;
 }
 
 export async function logoutAdmin(): Promise<void> {
-  await request<void>("/admins/logout", {
-    method: "POST",
-  });
+  await axios.post("/api/admins/logout");
+}
+
+export async function updateAdmin(payload: AdminUpdatePayload): Promise<AdminResponse> {
+  const res = await axios.patch<AdminResponse>("/api/admins/update", payload);
+  await axios.post("/api/admins/logout");
+  return res.data;
 }
 
 export async function deleteCurrentAdmin(password: string): Promise<void> {

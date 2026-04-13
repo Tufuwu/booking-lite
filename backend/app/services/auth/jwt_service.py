@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
+import os
 
-SECRET_KEY = "your-secret-key"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

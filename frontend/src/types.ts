@@ -29,3 +29,8 @@ export interface ApiErrorShape {
   detail?: string | { msg?: string };
   msg?: string;
 }
+
+export interface AdminUpdatePayload {
+  name?: string;
+  password?: string;
+}

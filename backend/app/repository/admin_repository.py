@@ -17,6 +17,11 @@ class AdminRepository:
 
     async def get_all_admins(self, db: Session):
         return db.query(models.Admin).all()
+    
+    async def update_admin(self, db: Session, admin: models.Admin):
+        db.commit()
+        db.refresh(admin)
+        return admin
 
     async def delete_admin(self, db: Session, admin: models.Admin) -> None:
         db.delete(admin)

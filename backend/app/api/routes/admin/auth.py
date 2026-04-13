@@ -11,7 +11,7 @@ SESSION_EXPIRE = 7200  # 2小时
 
 @router.post("/login")
 async def admin_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response, db: Annotated[Session, Depends(get_db)]):
-    user = await services.login(db, form_data)
+    user = await services.login_admin(db, form_data)
     if not user or user["role"] != "admin":
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
     

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status, Request, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_admin
@@ -38,3 +38,26 @@ async def delete_admin_me(
     current_admin: schemas.AdminOut = Depends(get_current_admin),
 ):
     return await services.delete_admin(request, db, admin, current_admin)
+
+@router.patch(
+    "/update",
+    response_model=schemas.AdminOut,
+    status_code=status.HTTP_200_OK
+)
+async def update_admin_me(
+    admin: schemas.AdminUpdate,
+    db: Session = Depends(get_db),
+    current_admin: schemas.AdminOut = Depends(get_current_admin),
+):
+    return await services.update_admin(db, admin, current_admin)
+
+
+@router.get("/me")
+async def get_current_user(current_admin: schemas.AdminOut = Depends(get_current_admin), db: Session = Depends(get_db)):
+
+    user = await services.SessionService().get_user(db, current_admin)
+
+    if not user:
+        raise HTTPException(401)
+
+    return user

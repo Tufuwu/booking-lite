@@ -1,9 +1,3 @@
-<div class="shell">
-  navbar
-  <main>page</main>
-</div>
-
-
 <template>
   <div class="shell">
     <Navbar />

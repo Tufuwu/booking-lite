@@ -15,3 +15,14 @@ async def create_room(db: Session, room: schemas.RoomCreate):
         price=room.price
     )
     return await rooms.create_room(db, new_room)
+
+
+async def delete_room(db: Session, room_number: str):
+    room = await rooms.get_by_room_number(db, room_number)
+    if not room:
+        return None
+    await rooms.delete_room(db, room)
+    return True
+
+async def get_all_rooms(db: Session):
+    return await rooms.get_all_rooms(db)

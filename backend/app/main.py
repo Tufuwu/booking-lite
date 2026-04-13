@@ -8,6 +8,7 @@ from app import core
 from app.api.routes.admin.auth import router as auth_router
 from app.api.routes.admin.admins import router as admin_router
 from app.api.routes.admin.room import router as room_router 
+from app.api.routes.web.auth import router as user_router
 from app.db import redis_client
 # from routers import (
 #     user_router,
@@ -50,6 +51,7 @@ origins = [
     "http://127.0.0.1:4173",
     "http://localhost:4173",
     "null",
+    "http://localhost:5173",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -62,3 +64,4 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(room_router)
+app.include_router(user_router)

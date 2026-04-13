@@ -9,7 +9,20 @@ class AuthService:
         return JWTService().create_token(user)
 
     async def authenticate(self, request):
-        # 混合认证入口
-        # 1. session
-        # 2. jwt
-        pass
+        # 1. 优先尝试 session（Web）
+        session_id = request.cookies.get("session_id")
+        if session_id:
+            user = await SessionService().get_user(session_id)
+            if user:
+                return user
+
+        # 2. 再尝试 JWT（Mobile / API）
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            user = JWTService().verify_token(token)
+            if user:
+                return user
+
+        # 3. 都失败
+        raise UnauthorizedException()

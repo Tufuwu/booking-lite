@@ -9,12 +9,16 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "@vitejs/plugin-vue": "^6.0.5",
     "typescript": "^6.0.2",
     "vue-tsc": "^3.2.6"
   },
   "dependencies": {
+    "axios": "^1.15.0",
+    "pinia": "^3.0.4",
     "vite": "^8.0.8",
-    "vue": "^3.5.32"
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.4"
   }
 }

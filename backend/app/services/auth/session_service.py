@@ -2,7 +2,7 @@ import secrets
 import json
 import time
 from app.db.redis import redis_client
-
+from app.repository import admins
 SESSION_EXPIRE = 7200
 
 class SessionService:
@@ -37,3 +37,6 @@ class SessionService:
     
     async def delete_session(self, session_id):
         await redis_client.delete(f"session:{session_id}")
+
+    async def get_user(self, db, current_admin):
+        return await admins.get_by_job_number(db, current_admin['user_id'])

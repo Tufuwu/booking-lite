@@ -9,7 +9,7 @@ from app.repository.admin_repository import admins
 from ..auth.session_service import SessionService
 
 
-async def login(db: Session, form_data):
+async def login_admin(db: Session, form_data):
     admin: models.Admin = await admins.get_by_user_name(db, form_data.username)
     if not admin:
         return None
@@ -55,6 +55,16 @@ async def checkout_admin(request: Request):
 
     return await SessionService().delete_session(session_id)
 
+async def update_admin(db: Session, admin: schemas.AdminUpdate, current_admin_id: dict):
+    admin_in_db: models.Admin = await admins.get_by_job_number(db, current_admin_id["user_id"])
+    if not admin_in_db:
+        return None
+    if admin.name:
+        admin_in_db.name = admin.name
+    if admin.password:
+        hashed_password = core.security.hash_password(admin.password)
+        admin_in_db.hashed_password = hashed_password
+    return await admins.update_admin(db, admin_in_db)
 
 async def delete_admin(
     request: Request,
