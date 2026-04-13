@@ -47,6 +47,9 @@ async def startup_event():
 
 origins = [
     "http://localhost:8080",
+    "http://127.0.0.1:4173",
+    "http://localhost:4173",
+    "null",
 ]
 app.add_middleware(
     CORSMiddleware,

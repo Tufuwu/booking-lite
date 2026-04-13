@@ -11,7 +11,7 @@ async def create_room(db: Session, room: schemas.RoomCreate):
         return None
     new_room = models.Room(
         room_number=room.room_number,
-        room_type=room.room_type,
+        type_=room.type_,
         price=room.price
     )
     return await rooms.create_room(db, new_room)

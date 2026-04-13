@@ -21,8 +21,8 @@ async def admin_login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
         key="session_id",
         value=session_id,
         httponly=True,
-        secure=True,        
-        samesite="None",    
+        secure=False,
+        samesite="Lax",
         max_age=7200,
         path="/"
     )
