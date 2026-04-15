@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-from jwt import ExpiredSignatureError, InvalidTokenError
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"

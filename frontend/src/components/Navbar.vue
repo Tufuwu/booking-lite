@@ -22,7 +22,7 @@ const router = useRouter();
 const handleCheckout = async () => {
   // 这里写你的 checkout 逻辑
   try {
-    await logoutAdmin();
+    // await logoutAdmin();
 
     userStore.logout();
 

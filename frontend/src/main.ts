@@ -1,13 +1,24 @@
-import { createApp } from "vue";
-import { createPinia } from 'pinia';
-import App from "./App.vue";
-import router from "./router";
-import axios from "axios";
+import { createApp } from "vue"
+import { createPinia } from "pinia"
+import App from "./App.vue"
+import router from "./router"
+import { useUserStore } from "@/store/user"
 
-axios.defaults.withCredentials = true;
-const app = createApp(App);
-const pinia = createPinia();
-app.use(pinia);
-app.use(router);
+import "./router/permission"
 
-app.mount("#app");
+const app = createApp(App)
+const pinia = createPinia()
+
+app.use(pinia)
+
+async function bootstrap() {
+  const userStore = useUserStore()
+
+  // ⭐关键：启动时身份校验
+  await userStore.initAuth()
+  app.use(router)
+  app.mount("#app")
+
+}
+
+bootstrap()

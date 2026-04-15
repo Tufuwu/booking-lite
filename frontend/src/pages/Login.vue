@@ -2,34 +2,39 @@
   <div>
     <h1>Login</h1>
     <form @submit.prevent="handleLogin">
-      <input v-model="username" placeholder="Username" />
+      <input v-model="loginForm.username" placeholder="Username" />
       
-      <input v-model="password" type="password" placeholder="Password" />
-      
+      <input v-model="loginForm.password" type="password" placeholder="Password" />
       <button type="submit">Login</button>
     </form>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from "vue";
 import { useUserStore } from "@/store/user";
 import { useRouter } from "vue-router";
+import type { LoginPayload } from "@/types";
 
-const username = ref("");
-const password = ref(""); // 新增变量
+
 const userStore = useUserStore();
 const router = useRouter();
 
+const loginForm = ref<LoginPayload>({
+  username: "",
+  password: ""
+});
+
 async function handleLogin() {
+
+
   const success = await userStore.login(
-    username.value,
-    password.value
+    loginForm.value.username,
+    loginForm.value.password
   );
 
   if (success) {
-    console.log("登录成功:");
-    router.push("/admin"); // ✅ 登录成功跳转
+    router.push("/admin");
   }
 }
 </script>

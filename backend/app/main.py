@@ -1,58 +1,33 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.repository import admins
-from app.db import models
-from app.db import engine, SessionLocal
-from app import core
-from app.api.routes.admin.auth import router as auth_router
-from app.api.routes.admin.admins import router as admin_router
-from app.api.routes.admin.room import router as room_router 
-from app.api.routes.web.auth import router as user_router
-from app.db import redis_client
-# from routers import (
-#     user_router,
-#     room_router,
-#     order_router,
-#     token_router,
-#     admin_router,
-#     admin_me_router,
-# )
-# from app import crud, schemas  # 根据你的项目结构调整
-
-models.Base.metadata.create_all(bind=engine)
-
+from app.db import models, engine, AsyncSessionLocal
+from app.db.init_db import init_db
+from app.api.routes.auth import router as auth_router
+from app.api.routes.admins import router as admin_router
 app = FastAPI()
+
+# 1. 在启动时异步初始化数据库表结构
 @app.on_event("startup")
 async def startup_event():
-    db = SessionLocal()
+    # 使用 engine.begin() 来创建表
+    async with engine.begin() as conn:
+        await conn.run_sync(models.Base.metadata.create_all)
+    
+    # 2. 正确获取异步数据库会话并初始化数据
+    async with AsyncSessionLocal() as db:
+        await init_db(db)
+        await db.commit()  # 确保初始化数据被提交
 
-    try:
-        existing = await admins.get_all_admins(db)
-        if existing:
-            return
-
-        hashed_password = core.security.hash_password("admin123")
-
-        admin = models.Admin(
-            job_number="0001",
-            name="Super Admin",
-            hashed_password=hashed_password
-        )
-
-        await admins.create_admin(db, admin)
-
-    finally:
-        db.close()
-
-
+# 配置 CORS
 origins = [
     "http://localhost:8080",
     "http://127.0.0.1:4173",
     "http://localhost:4173",
-    "null",
     "http://localhost:5173",
+    "null",
 ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -63,5 +38,3 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(admin_router)
-app.include_router(room_router)
-app.include_router(user_router)

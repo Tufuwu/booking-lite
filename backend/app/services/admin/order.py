@@ -1,43 +1,113 @@
 from sqlalchemy.orm import Session
 from typing import Optional
+from fastapi import HTTPException
 
 from app import schemas
 from app.db import models
-from app.repository.room_repository import orders,rooms
-from app.db import enums
+from backend.app.crud.permissions_crud import orders,rooms
+from app.db.enums import OrderStatus, RoomStatus
+
+ALLOWED_TRANSITIONS = {
+    OrderStatus.PENDING: {OrderStatus.CONFIRMED, OrderStatus.CANCELLED},
+    OrderStatus.CONFIRMED: {OrderStatus.CHECKED_IN, OrderStatus.CANCELLED},
+    OrderStatus.CHECKED_IN: {OrderStatus.REFUNDED, OrderStatus.COMPLETED},
+    OrderStatus.CANCELLED: {OrderStatus.REFUNDED},
+    OrderStatus.REFUNDED: set(),
+}
 
 
-async def create_order(db: Session, order: schemas.OrderCreate):
-    order_room = await rooms.get_by_room_number(db, order.room_id)
-    expense = order_room.price * order.stay_nights
-    new_order = models.Order(
-        user_id=order.user_id,
-        room_number=order.room_id,
-        check_in_date=order.check_in_date,
-        stay_nights=order.stay_nights,
-        expense=expense,
-        payment_status=enums.PaymentStatus.UNPAID
+def validate_transition(order, new_status: OrderStatus):
+    allowed = ALLOWED_TRANSITIONS.get(order.status, set())
+
+    if new_status not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{order.status} -> {new_status} not allowed"
+        )
+    
+async def create_order(db: Session, order_in: schemas.OrderCreate, user):
+    room = rooms.get_by_id(db, order_in.room_id)
+    if room is None:
+        raise HTTPException(status_code=404, detail="Room not found")
+    if room.room_status != RoomStatus.VACANT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Room not available, current status: {room.room_status}"
+        )
+
+    order = models.Order(
+        user_id=user.id,
+        room_id=room.id,
+        stay_length=order_in.stay_length,
+        status=OrderStatus.PENDING,
+        expense=(room.price * order_in.stay_length)
     )
-    return await orders.create_order(db, new_order)
+
+    db.add(order)
+
+    room.room_status = RoomStatus.RESERVED
+
+    db.commit()
+    db.refresh(order)
+
+    return order
 
 
-async def get_order_id(
-    db: Session, 
-    user_id: Optional[int] = None,
-    room_id: Optional[int] = None,
-    check_in_time_min: Optional[str] = None,
-    stay_nights: Optional[str] = None,
-    payment_status: Optional[str] = None
-    ):
-    criterion: list = []
-    if user_id is not None:
-        criterion.append(models.Order.user_id == user_id)
-    if room_id is not None:
-        criterion.append(models.Order.room_id == room_id)
-    if check_in_time_min is not None:
-        criterion.append(models.Order.check_in_time >= check_in_time_min)
-    if stay_nights is not None:
-        criterion.append(models.Order.stay_nights == stay_nights)
-    if payment_status is not None:
-        criterion.append(models.Order.payment_status == payment_status)
-    return await orders.get_by_criterion(db, criterion)
+
+async def confirm_order(db: Session, order_id: int, user):
+    order = orders.get_by_id(db, order_id)
+
+    validate_transition(order, OrderStatus.CONFIRMED)
+
+    order.mark_confirmed()
+ 
+    db.commit()
+    return order
+
+
+async def check_in_order(db: Session, order_id: int, user):
+    order = orders.get_by_id(db, order_id)
+
+    validate_transition(order, OrderStatus.CHECKED_IN)
+
+    order.mark_checked_in()
+
+    # side effect 在 service 统一处理
+    order.room.room_status = RoomStatus.OCCUPIED
+
+    db.commit()
+    return order
+
+async def cancel_order(db: Session, order_id: int, user):
+    order = orders.get_by_id(db, order_id)
+
+    validate_transition(order, OrderStatus.CANCELLED)
+
+    order.mark_cancelled()
+
+    order.room.room_status = RoomStatus.VACANT
+
+    db.commit()
+    return order
+
+async def refund_order(db: Session, order_id: int, user):
+    order = orders.get_by_id(db, order_id)
+
+    validate_transition(order, OrderStatus.REFUNDED)
+
+    order.mark_refunded()
+
+    db.commit()
+    return order
+
+async def check_out_order(db: Session, order_id: int, user):
+    order = orders.get_by_id(db, order_id)
+
+    validate_transition(order, OrderStatus.COMPLETED)
+
+    order.set_status(OrderStatus.COMPLETED)
+
+    order.room.room_status = RoomStatus.VACANT
+
+    db.commit()
+    return order

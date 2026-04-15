@@ -34,3 +34,21 @@ export interface AdminUpdatePayload {
   name?: string;
   password?: string;
 }
+
+export interface RoomUpdatePayload {
+  room_number: string;
+  type_?: "single" | "twin" | "family";
+  price?: string;
+}
+
+export interface UserCreatePayload {
+  name: string;
+  phone_number: string;
+  identity_number: string;
+  password: string;
+}
+
+export interface LoginPayload {
+  username: string;
+  password: string;
+}

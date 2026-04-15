@@ -14,6 +14,9 @@ class RoomStatus(str, Enum):
     RESERVED = "reserved"
 
 
-class PaymentStatus(str, Enum):
-    UNPAID = "unpaid"
-    PAID = "paid"
+class OrderStatus(str, Enum):
+    PENDING = "PENDING"        # 已预订/待确认
+    CONFIRMED = "CONFIRMED"    # 已确认（已支付或锁房）
+    CHECKED_IN = "CHECKED_IN"  # 已入住
+    CANCELLED = "CANCELLED"    # 已取消
+    REFUNDED = "REFUNDED"      # 已退款

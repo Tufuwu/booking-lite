@@ -7,39 +7,87 @@ interface Session {
 
 export const useUserStore = defineStore("user", {
   state: () => ({
-    session: null as Session | null,
+    token: localStorage.getItem("token") || "",
+    user: null as any,
+    roles: [] as string[],
+    permissions: [] as string[],
+    ready: false
   }),
+
   getters: {
-    isLoggedIn: (state) => !!state.session,
+    isLoggedIn: (state) => !!state.token,
+    role: (state) => state.user?.role,
   },
+
   actions: {
-    async login(name: string, pass: string) {
+    // ✅ 统一登录（不分 admin/user API）
+    async login(username: string, password: string) {
       try {
-        const params = new URLSearchParams();
-        params.append("username", name);
-        params.append("password", pass);
+        const data = new URLSearchParams()
+        data.append("username", username)
+        data.append("password", password)
 
-        await axios.post("/api/admin/login", params, {
-          withCredentials: true,
-        });
+        const res = await axios.post("/api/login", data, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        })
 
-        const user = await this.fetchMe();
+        this.token = res.data.access_token
+        localStorage.setItem("token", this.token)
 
-        return user;
-      } catch (error: any) {
-        return null;
+        await this.initAuth()
+
+        return true   // ⭐关键
+      } catch (e: any) {
+        return false
       }
     },
+
+    // ⭐启动鉴权（核心）
+    async initAuth() {
+      if (!this.token) {
+        this.ready = true
+        return
+      }
+
+      try {
+        const res = await axios.get("/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        })
+
+        this.user = res.data
+        this.roles = res.data.role ? [res.data.role.name] : []
+        this.permissions =
+          (res.data.role?.permissions ?? []).map((p: any) => p.code)
+      } catch {
+        this.logout()
+      } finally {
+        this.ready = true
+      }
+    },
+
+    // ✅ 统一用户信息接口
     async fetchMe() {
-      const res = await axios.get("/api/admins/me", {
-        withCredentials: true,
+      const res = await axios.get("/api/users/me", {
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+        },
       });
 
-      this.session = res.data;
+      this.user = res.data;
+      console.log("用户信息已更新:", this.user);
       return res.data;
     },
+
     logout() {
-      this.session = null;
-    },
+      this.token = ""
+      this.user = null
+      this.roles = []
+      this.permissions = []
+      localStorage.removeItem("token")
+    }
   },
 });
