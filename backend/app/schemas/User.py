@@ -5,8 +5,8 @@ from app.utils.regex import IDENTITY_NUMBER_REGEX
 from app.db.enums import RoleEnum
 
 class UserBase(BaseModel):
-    job_number: Annotated[str, Field(strip_whitespace=True)]
     name: Annotated[str, Field(strip_whitespace=True)]
+    phone_number: Annotated[str, Field(strip_whitespace=True)]
     identity_number: Annotated[str, Field(strip_whitespace=True, pattern=IDENTITY_NUMBER_REGEX)]
     role: Annotated[RoleEnum, Field(strip_whitespace=True)]
 

@@ -11,8 +11,13 @@ export const asyncRoutes = [
     meta: { roles: ["admin"] }
   },
   {
-    path: "/orders",
-    component: () => import("@/pages/Order.vue"),
+    path: "/admin/room",
+    component: () => import("@/pages/RoomManage.vue"),
+    meta: { roles: ["admin"] }
+  },
+  {
+    path: "/admin/orders",
+    component: () => import("@/pages/OrderManage.vue"),
     meta: { roles: ["admin", "staff"] }
   }
 ]

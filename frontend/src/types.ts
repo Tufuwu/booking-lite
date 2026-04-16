@@ -8,9 +8,11 @@ export interface SessionUser {
   loggedInAt: string;
 }
 
-export interface AdminCreatePayload {
-  job_number: string;
+export interface UserCreatePayload {
   name: string;
+  phone_number: string;
+  identity_number: string;
+  type_: "admin" | "staff" | "guest";
   password: string;
 }
 

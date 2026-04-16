@@ -12,7 +12,7 @@
       <article class="card">
         <button @click="moveToRoomAdmin">Manage Rooms</button>
         <button @click="moveToAdmin" class="button-danger">admin</button>
-        <button @click="moveToOrderAdmin">Manage Order</button>
+
       </article>
       <article class="card danger-card">
         <p class="eyebrow">Settings</p>
@@ -28,22 +28,6 @@
       </article>
     </section>
 
-    <article class="card">
-      <h3>Create admin</h3>
-      <form @submit.prevent="handleCreateAdmin" class="form-stack">
-        <input v-model="userForm.name" placeholder="Name" required />
-        <input v-model="userForm.phone_number" placeholder="Phone number" required />
-        <input v-model="userForm.identity_number" placeholder="Identity number" required />
-        <input v-model="userForm.password" placeholder="Password" required />
-        <select v-model="userForm.type_">
-          <option value="single">admin</option>
-          <option value="twin">staff</option>
-          <option value="family">guest</option>
-        </select>
-        <button type="submit">Create admin</button>
-        <p class="feedback">{{ adminFeedback }}</p> 
-      </form>
-    </article>
     <section class="grid grid-2">
       <article class="card">
         <h3>Update admin</h3>
@@ -55,8 +39,25 @@
         </form> -->
       </article>
 
+      <article class="card">
+        <h3>Create admin</h3>
 
+      </article>
 
+      <article class="card">
+        <h3>Create room</h3>
+        <!-- <form @submit.prevent="handleCreateRoom" class="form-stack">
+          <input v-model="roomForm.room_number" placeholder="Room number" required />
+          <select v-model="roomForm.type_">
+            <option value="single">single</option>
+            <option value="twin">twin</option>
+            <option value="family">family</option>
+          </select>
+          <input v-model="roomForm.price" type="number" step="0.01" required />
+          <button type="submit">Create room</button>
+          <p class="feedback">{{ roomFeedback }}</p>
+        </form> -->
+      </article>
     </section>
   </div>
 </template>
@@ -74,7 +75,6 @@ const router = useRouter();
 // 反馈信息状态
 const sessionFeedback = ref("");
 const deleteFeedback = ref("");
-const adminFeedback = ref("");
 const roomFeedback = ref("");
 
 // 表单数据绑定
@@ -85,7 +85,7 @@ const adminUpdateForm = reactive({ name: "", password: "" });
 // 处理逻辑
 
 const moveToRoomAdmin = () => {
-  router.push("/admin/room");
+  router.push("/admin/rooms");
 };
 const moveToAdmin = () => {
   router.push("/admin");
@@ -119,12 +119,6 @@ const handleDeleteAdmin = async () => {
   } catch (e: any) { deleteFeedback.value = e.message; }
 };
 
-const handleCreateAdmin = async () => {
-  try {
-    const created = await createAdmin(userForm);
-    adminFeedback.value = `Created: ${created.name}`;
-  } catch (e: any) { adminFeedback.value = e.message; }
-};
 
 
 

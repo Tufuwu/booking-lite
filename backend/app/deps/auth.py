@@ -14,15 +14,13 @@ ALGORITHM = "HS256"
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user = payload  # 或 payload["sub"]
-    except (ExpiredSignatureError, InvalidTokenError):
-        return None
+        user = payload
+    except ExpiredSignatureError:
+        raise HTTPException(401, "Token 已过期")
+    except InvalidTokenError:
+        raise HTTPException(401, "Token 无效")
 
-
-    if user.get("role") != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required",
-        )
+    if user is None:
+        raise HTTPException(401, "未认证")
 
     return user
