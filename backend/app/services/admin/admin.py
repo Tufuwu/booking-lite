@@ -25,14 +25,14 @@ async def login_user(db: AsyncSession, form_data):
 
 
 async def create_user(db: AsyncSession, user: schemas.UserCreate):
-    is_admin_exist: models.Admin = await users.get_by_user_name(db, user.name)
+    is_user_exist: models.Admin = await users.get_by_user_name(db, user.identity_number)
 
-    if is_admin_exist:
+    if is_user_exist:
         return None
     role = await roles.get_by_name(db, user.role)
     if not role:
         raise ValueError("Role not found")
-    admin_role = await roles.get_by_name(db, "admin")
+    admin_role = await roles.get_by_name(db, user.role)
     if not admin_role:
         raise ValueError("Admin role not initialized")
     hashed_password = core.security.hash_password(user.password)

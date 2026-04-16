@@ -41,13 +41,13 @@
 
       <article class="card">
         <h3>Create admin</h3>
-        <!-- <form @submit.prevent="handleCreateAdmin" class="form-stack">
+        <form @submit.prevent="handleCreateAdmin" class="form-stack">
           <input v-model="adminForm.job_number" placeholder="Job number" required />
           <input v-model="adminForm.name" placeholder="Name" required />
           <input v-model="adminForm.password" type="password" required />
           <button type="submit">Create admin</button>
           <p class="feedback">{{ adminFeedback }}</p> -->
-        <!-- </form> -->
+        <!-- </form>
       </article>
 
       <article class="card">

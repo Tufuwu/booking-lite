@@ -20,3 +20,9 @@ class OrderStatus(str, Enum):
     CHECKED_IN = "CHECKED_IN"  # 已入住
     CANCELLED = "CANCELLED"    # 已取消
     REFUNDED = "REFUNDED"      # 已退款
+
+
+class RoleEnum(str, Enum):
+    ADMIN = "admin"
+    STAFF = "staff"
+    GUEST = "guest"
