@@ -42,7 +42,7 @@ export async function loginAdmin(
 export async function createAdmin(
   payload: AdminCreatePayload
 ): Promise<AdminResponse> {
-  const res = await http.post<AdminResponse>("/admins/", payload);
+  const res = await http.post<AdminResponse>("/users", payload);
   return res.data;
 }
 

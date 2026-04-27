@@ -1,12 +1,23 @@
-from pydantic import BaseModel, Field
-from typing import Annotated, Optional
-from app.utils.regex import IDENTITY_NUMBER_REGEX
+from pydantic import BaseModel, Field, model_validator
+from typing import Annotated
 
 class OrderBase(BaseModel):
     name: Annotated[str, Field(strip_whitespace=True)]
     phone_number: Annotated[str, Field(strip_whitespace=True)]
-    identity_number: Annotated[str, Field(strip_whitespace=True, pattern=IDENTITY_NUMBER_REGEX)]
+    room_number: Annotated[str | None, Field(strip_whitespace=True)] = None
+    room_id: int | None = None
+    stay_length: int = Field(gt=0)
+
+    @model_validator(mode="after")
+    def validate_room_reference(self):
+        if self.room_number is None and self.room_id is None:
+            raise ValueError("room_number or room_id is required")
+        return self
 
 
 class OrderCreate(OrderBase):
     pass
+
+
+class OrderExtend(BaseModel):
+    extra_days: int = Field(gt=0)

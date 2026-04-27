@@ -8,7 +8,6 @@ from app import services
 from app.crud import users
 from app.core.permissions import require_permission
 router = APIRouter(
-    prefix="/users",
     tags=["admins"],
     dependencies=[Depends(get_current_user)],
 )
@@ -20,6 +19,7 @@ async def create_user(
     db: Session = Depends(get_db),
     current_user=Depends(require_permission("user:create"))
 ):
+    print(user.identity_number)
     return await services.create_user(db, user)
 
 
@@ -29,7 +29,7 @@ async def logout(request: Request):
 
 
 
-@router.get("/me")
+@router.get("/users/me")
 async def get_current_user(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
 
     user = await services.get_me(db, current_user)

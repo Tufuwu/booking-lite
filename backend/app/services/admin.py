@@ -82,7 +82,13 @@ def serialize_room(room: models.Room):
         "room_status": room.room_status.value if room.room_status else None,
     }
 
-
+def serialize_user(user: models.User):
+    return {
+        "id": user.id,
+        "name": user.name,
+        "room_number": user.phone_number,
+        "order": user.orders
+    }
 async def create_room(db: AsyncSession, room: schemas.RoomCreate):
     existing_room = await rooms.get_by_room_number(db, room.room_number)
     if existing_room:
@@ -109,3 +115,8 @@ async def delete_room(db: AsyncSession, room_number: str):
 async def get_all_rooms(db: AsyncSession):
     room_list = await rooms.get_all_rooms(db)
     return [serialize_room(room) for room in room_list]
+
+
+async def get_all_users(db: AsyncSession):
+    user_list = await users.get_all_users(db)
+    return [serialize_user(user) for user in user_list]

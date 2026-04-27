@@ -1,12 +1,5 @@
 import http from "./http";
-import type { UserCreatePayload } from "../types.js";
-
-interface UserResponse {
-  id: number;
-  name: string;
-  phone_number: string;
-  identity_number: string;
-}
+import type { UserCreatePayload, UserResponse } from "@/types";
 
 /**
  * 创建用户
@@ -14,6 +7,12 @@ interface UserResponse {
 export async function createUser(
   payload: UserCreatePayload
 ): Promise<UserResponse> {
-  const res = await http.post<UserResponse>("/admins/", payload);
+  const res = await http.post<UserResponse>("/users", payload);
+  return res.data;
+}
+
+
+export async function getAllUsers():Promise<UserResponse[]> {
+  const res = await http.get<UserResponse[]>("/admins/user/all");
   return res.data;
 }

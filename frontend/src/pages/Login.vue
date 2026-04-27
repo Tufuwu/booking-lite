@@ -48,6 +48,12 @@ const loginForm = ref<LoginPayload>({
   password: "",
 });
 
+const roleHomeMap: Record<string, string> = {
+  admin: "/admin",
+  staff: "/admin/order",
+  guest: "/",
+};
+
 async function handleLogin() {
   feedback.value = "";
 
@@ -57,7 +63,8 @@ async function handleLogin() {
   );
 
   if (success) {
-    await router.push("/admin");
+    const role = userStore.roles[0] ?? userStore.role;
+    await router.push(roleHomeMap[role] ?? "/");
     return;
   }
 

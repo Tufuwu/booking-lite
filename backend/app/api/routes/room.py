@@ -5,7 +5,7 @@ from app.db import get_db
 from app import schemas
 from app.deps.auth import get_current_user
 from app import services
-
+from app.core.permissions import require_permission
 router = APIRouter(
     prefix="/admins/room",
     tags=["admins"],
@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 @router.post("/")
-async def create_room(room: schemas.RoomCreate, db: AsyncSession = Depends(get_db)):
+async def create_room(room: schemas.RoomCreate, db: AsyncSession = Depends(get_db), current_user=Depends(require_permission("room:create"))):
     return await services.create_room(db, room)
 
 

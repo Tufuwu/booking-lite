@@ -381,6 +381,10 @@ select:focus {
   background: var(--surface-soft);
 }
 
+.order-row {
+  grid-template-columns: 0.55fr 1fr 0.85fr 0.85fr 0.9fr 1fr 0.9fr 2.2fr;
+}
+
 .data-row-head {
   background: white;
   color: var(--muted);
@@ -397,6 +401,18 @@ select:focus {
   color: var(--accent-strong);
   font-weight: 800;
   font-size: 0.82rem;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.table-actions button {
+  min-height: 32px;
+  padding: 0.42rem 0.56rem;
+  font-size: 0.78rem;
 }
 
 @media (max-width: 900px) {

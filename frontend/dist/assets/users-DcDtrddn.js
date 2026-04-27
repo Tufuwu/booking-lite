@@ -1,0 +1,1 @@
+import{t as e}from"./http-DDwE1DeE.js";async function t(t){return(await e.post(`/users`,t)).data}async function n(){return(await e.get(`/admins/user/all`)).data}export{n,t};

@@ -11,28 +11,28 @@
       <article class="card">
         <p class="eyebrow">Create account</p>
         <h2>New staff</h2>
-        <form @submit.prevent="handleCreateAdmin" class="form-stack">
+        <form @submit.prevent="handleCreateUser" class="form-stack">
           <div class="form-grid">
             <label>
               <span>Name</span>
-              <input v-model="userForm.name" placeholder="Full name" required />
+              <input v-model.trim="userForm.name" placeholder="Full name" required />
             </label>
             <label>
               <span>Phone number</span>
-              <input v-model="userForm.phone_number" placeholder="Contact phone" required />
+              <input v-model.trim="userForm.phone_number" placeholder="Contact phone" required />
             </label>
             <label>
               <span>Identity number</span>
-              <input v-model="userForm.identity_number" placeholder="ID number" required />
+              <input v-model.trim="userForm.identity_number" placeholder="ID number" required />
             </label>
             <label>
               <span>Password</span>
-              <input v-model="userForm.password" type="password" placeholder="Temporary password" required />
+              <input v-model.trim="userForm.password" type="password" placeholder="Temporary password" required />
             </label>
           </div>
           <label>
             <span>Role</span>
-            <select v-model="userForm.type_">
+            <select v-model="userForm.role">
               <option value="admin">Admin</option>
               <option value="staff">Staff</option>
               <option value="guest">Guest</option>
@@ -63,7 +63,8 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import { createAdmin, deleteCurrentAdmin } from "@/api/auth";
+import { deleteCurrentAdmin } from "@/api/auth";
+import { createUser } from "@/api/users";
 import { useUserStore } from "@/store/user";
 import type { UserCreatePayload } from "@/types";
 
@@ -77,14 +78,11 @@ const userForm = reactive<UserCreatePayload>({
   name: "",
   phone_number: "",
   identity_number: "",
-  type_: "staff",
+  role: "staff",
   password: "",
 });
 
-const moveToRoomAdmin = () => router.push("/admin/room");
-const moveToAdmin = () => router.push("/admin");
-const moveToOrderAdmin = () => router.push("/admin/order");
-const moveToUserAdmin = () => router.push("/admin/user");
+
 
 const handleDeleteAdmin = async () => {
   try {
@@ -96,10 +94,30 @@ const handleDeleteAdmin = async () => {
   }
 };
 
-const handleCreateAdmin = async () => {
+const handleCreateUser = async () => {
+  adminFeedback.value = "";
+
+  const payload: UserCreatePayload = {
+    name: userForm.name.trim(),
+    phone_number: userForm.phone_number.trim(),
+    identity_number: userForm.identity_number.trim(),
+    role: userForm.role,
+    password: userForm.password.trim(),
+  };
+
+  if (!payload.name || !payload.phone_number || !payload.identity_number || !payload.password) {
+    adminFeedback.value = "Please fill in all account fields.";
+    return;
+  }
+
   try {
-    const created = await createAdmin(userForm);
+    const created = await createUser(payload);
     adminFeedback.value = `Created: ${created.name}`;
+    userForm.name = "";
+    userForm.phone_number = "";
+    userForm.identity_number = "";
+    userForm.role = "staff";
+    userForm.password = "";
   } catch (e: any) {
     adminFeedback.value = e.message;
   }

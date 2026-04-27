@@ -13,7 +13,7 @@ export interface UserCreatePayload {
   name: string;
   phone_number: string;
   identity_number: string;
-  type_: UserRole;
+  role: UserRole;
   password: string;
 }
 
@@ -57,4 +57,45 @@ export interface RoomResponse {
   type_: string;
   price: number | string;
   room_status?: string;
+}
+
+export type OrderStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "CHECKED_IN"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "REFUNDED";
+
+export interface OrderResponse {
+  id: number;
+  user_id?: number;
+  room_id?: number;
+  check_in_time?: string;
+  stay_length?: number;
+  expense?: number;
+  status?: OrderStatus | string;
+  created_at?: string;
+  updated_at?: string;
+  user?: {
+    id?: number;
+    name?: string;
+    phone_number?: string;
+    identity_number?: string;
+  };
+  room?: {
+    id?: number;
+    room_number?: string;
+    type_?: string;
+    price?: number;
+    room_status?: string;
+  };
+}
+
+export interface UserResponse {
+  id: number;
+  name: string;
+  phone_number: string;
+  identity_number?: string;
+  order?: OrderResponse[];
 }
