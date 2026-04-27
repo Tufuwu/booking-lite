@@ -1,12 +1,5 @@
 import http from "./http";
-import type { RoomCreatePayload, RoomUpdatePayload } from "../types.js";
-
-interface RoomResponse {
-  id: number;
-  room_number: string;
-  type_: string;
-  price: number;
-}
+import type { RoomCreatePayload, RoomResponse, RoomUpdatePayload } from "../types.js";
 
 /**
  * 创建房间
@@ -21,8 +14,8 @@ export async function createRoom(
 /**
  * 删除房间
  */
-export async function deleteRoom(roomId: number): Promise<void> {
-  await http.delete(`/admins/room/${roomId}`);
+export async function deleteRoom(roomNumber: string): Promise<void> {
+  await http.delete(`/admins/room/${roomNumber}`);
 }
 
 /**
@@ -32,5 +25,13 @@ export async function updateRoom(
   payload: RoomUpdatePayload
 ): Promise<RoomResponse[]> {
   const res = await http.patch<RoomResponse[]>("/admins/room/", payload);
+  return res.data;
+}
+
+/**
+ * 查询全部房间
+ */
+export async function getAllRooms(): Promise<RoomResponse[]> {
+  const res = await http.get<RoomResponse[]>("/admins/room/all");
   return res.data;
 }

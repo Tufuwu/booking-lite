@@ -5,6 +5,7 @@ from app.db import models, engine, AsyncSessionLocal
 from app.db.init_db import init_db
 from app.api.routes.auth import router as auth_router
 from app.api.routes.admins import router as admin_router
+from app.api.routes.room import router as room_router
 app = FastAPI()
 
 # 1. 在启动时异步初始化数据库表结构
@@ -38,3 +39,4 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(room_router)

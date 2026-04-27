@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from app import core
 from app import schemas
 from app.db import models
-from app.crud import users, roles
+from app.crud import users, roles, rooms
 
 
 
@@ -71,3 +71,41 @@ async def get_me(db: AsyncSession, current_user: dict):
             ]
         } if user.role else None
     }
+
+
+def serialize_room(room: models.Room):
+    return {
+        "id": room.id,
+        "room_number": room.room_number,
+        "type_": room.type_.value if room.type_ else None,
+        "price": room.price,
+        "room_status": room.room_status.value if room.room_status else None,
+    }
+
+
+async def create_room(db: AsyncSession, room: schemas.RoomCreate):
+    existing_room = await rooms.get_by_room_number(db, room.room_number)
+    if existing_room:
+        raise HTTPException(status_code=409, detail="Room already exists")
+
+    new_room = models.Room(
+        room_number=room.room_number,
+        type_=room.type_,
+        price=float(room.price),
+    )
+    created_room = await rooms.create_room(db, new_room)
+    return serialize_room(created_room)
+
+
+async def delete_room(db: AsyncSession, room_number: str):
+    room = await rooms.get_by_room_number(db, room_number)
+    if not room:
+        return False
+
+    await rooms.delete_room(db, room)
+    return True
+
+
+async def get_all_rooms(db: AsyncSession):
+    room_list = await rooms.get_all_rooms(db)
+    return [serialize_room(room) for room in room_list]

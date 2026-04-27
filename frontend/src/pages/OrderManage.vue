@@ -1,56 +1,36 @@
 <template>
-  <section class="card">
-    <p class="eyebrow">Booking Placeholder</p>
-    <h2>Booking, check-in, and payment APIs are still pending</h2>
-    <p class="muted">{{ info }}</p>
-    <p class="note">
-      The backend already has an Order model, but it does not expose create-order, list-order, or payment-status routes yet, so this page is intentionally a shell for the next step.
-    </p>
-  </section>
+  <div class="admin-page">
+    <section class="panel">
+      <p class="eyebrow">Order management</p>
+      <h1>Orders workspace</h1>
+      <p class="muted">Booking, check-in, and payment endpoints can plug into this workspace next.</p>
+    </section>
+
+    <section class="metric-row">
+      <article class="metric-card">
+        <span class="muted">Today</span>
+        <strong>--</strong>
+      </article>
+      <article class="metric-card">
+        <span class="muted">Pending</span>
+        <strong>--</strong>
+      </article>
+      <article class="metric-card">
+        <span class="muted">Checked in</span>
+        <strong>--</strong>
+      </article>
+      <article class="metric-card">
+        <span class="muted">Revenue</span>
+        <strong>--</strong>
+      </article>
+    </section>
+
+    <section class="card empty-panel">
+      <p class="eyebrow">API pending</p>
+      <h2>Order table</h2>
+      <p class="muted">Once the backend exposes order routes, this area can become a searchable booking table.</p>
+    </section>
+  </div>
 </template>
 
-<script setup lang="ts">
-import { computed } from "vue";
-import { bookingStore } from "@/store/bookingStore"; // 假设你使用了 Pinia
-
-const store = bookingStore;
-
-import { ref, reactive, computed } from "vue";
-import { useUserStore } from "@/store/user";
-import { useRouter } from "vue-router";
-import { createAdmin, deleteCurrentAdmin, logoutAdmin, updateAdmin } from "@/api/auth";
-
-import type { UserCreatePayload, RoomCreatePayload } from "@/types";
-
-const userStore = useUserStore();
-const router = useRouter();
-// 反馈信息状态
-const sessionFeedback = ref("");
-const deleteFeedback = ref("");
-const roomFeedback = ref("");
-
-// 表单数据绑定
-const deleteForm = reactive({ password: "" });
-const userForm = reactive<UserCreatePayload>({ name: "", phone_number: "", identity_number: "", type_: "guest", password: "" });
-const roomForm = reactive<RoomCreatePayload>({ room_number: "", type_: "single", price: "" });
-const adminUpdateForm = reactive({ name: "", password: "" });
-// 处理逻辑
-
-const moveToRoomAdmin = () => {
-  router.push("/admin/rooms");
-};
-const moveToAdmin = () => {
-  router.push("/admin");
-};
-const moveToOrderAdmin = () => {
-  router.push("/admin/order");
-};
-</script>
-
-<style scoped>
-/* 可以在这里直接添加你的样式 */
-.card { padding: 20px; border: 1px solid #ccc; }
-.eyebrow { color: #888; text-transform: uppercase; }
-.muted { color: #666; }
-.note { font-size: 0.9em; font-style: italic; }
-</style>
+<script setup lang="ts"></script>

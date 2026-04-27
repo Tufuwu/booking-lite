@@ -17,9 +17,8 @@
     "skipLibCheck": true,
 
     // ✅ 就加这里（关键）
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]

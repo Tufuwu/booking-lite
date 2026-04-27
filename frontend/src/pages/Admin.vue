@@ -1,131 +1,107 @@
 <template>
   <div class="admin-page">
+    <section class="panel">
+      <p class="eyebrow">Admin console</p>
+      <p class="muted">
+        Signed in as {{ userStore.user?.name || "current staff" }}.
+      </p>
+    </section>
+
     <section class="grid grid-2">
       <article class="card">
-        <h2>Admin console</h2>
-        <p class="muted">
-          User:
-          {{ userStore.user?.name || "errors" }}
-        </p>
-        <p class="feedback">{{ sessionFeedback }}</p>
+        <p class="eyebrow">Create account</p>
+        <h2>New staff</h2>
+        <form @submit.prevent="handleCreateAdmin" class="form-stack">
+          <div class="form-grid">
+            <label>
+              <span>Name</span>
+              <input v-model="userForm.name" placeholder="Full name" required />
+            </label>
+            <label>
+              <span>Phone number</span>
+              <input v-model="userForm.phone_number" placeholder="Contact phone" required />
+            </label>
+            <label>
+              <span>Identity number</span>
+              <input v-model="userForm.identity_number" placeholder="ID number" required />
+            </label>
+            <label>
+              <span>Password</span>
+              <input v-model="userForm.password" type="password" placeholder="Temporary password" required />
+            </label>
+          </div>
+          <label>
+            <span>Role</span>
+            <select v-model="userForm.type_">
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+              <option value="guest">Guest</option>
+            </select>
+          </label>
+          <button type="submit">Create account</button>
+          <p class="feedback">{{ adminFeedback }}</p>
+        </form>
       </article>
-      <article class="card">
-        <button @click="moveToRoomAdmin">Manage Rooms</button>
-        <button @click="moveToAdmin" class="button-danger">admin</button>
-        <button @click="moveToOrderAdmin">Manage Order</button>
-      </article>
+
       <article class="card danger-card">
-        <p class="eyebrow">Settings</p>
-        <h3>Delete admin</h3>
-        <!-- <form @submit.prevent="handleDeleteAdmin" class="form-stack">
+        <p class="eyebrow">Danger zone</p>
+        <h2>Delete current admin</h2>
+        <p class="muted">This action requires password confirmation.</p>
+        <form @submit.prevent="handleDeleteAdmin" class="form-stack">
           <label>
             <span>Confirm password</span>
             <input v-model="deleteForm.password" type="password" required />
           </label>
-          <button type="submit" class="button-danger">Delete current admin</button>
+          <button type="submit" class="button-danger">Delete account</button>
           <p class="feedback">{{ deleteFeedback }}</p>
-        </form> -->
+        </form>
       </article>
-    </section>
-
-    <article class="card">
-      <h3>Create admin</h3>
-      <form @submit.prevent="handleCreateAdmin" class="form-stack">
-        <input v-model="userForm.name" placeholder="Name" required />
-        <input v-model="userForm.phone_number" placeholder="Phone number" required />
-        <input v-model="userForm.identity_number" placeholder="Identity number" required />
-        <input v-model="userForm.password" placeholder="Password" required />
-        <select v-model="userForm.type_">
-          <option value="single">admin</option>
-          <option value="twin">staff</option>
-          <option value="family">guest</option>
-        </select>
-        <button type="submit">Create admin</button>
-        <p class="feedback">{{ adminFeedback }}</p> 
-      </form>
-    </article>
-    <section class="grid grid-2">
-      <article class="card">
-        <h3>Update admin</h3>
-        <!-- <form @submit.prevent="handleUpdateAdmin" class="form-stack">
-          <input v-model="adminUpdateForm.name" placeholder="Name"  />
-          <input v-model="adminUpdateForm.password" placeholder="Password"  />
-          <button type="submit">Update admin</button>
-          <p class="feedback">{{ adminFeedback }}</p>
-        </form> -->
-      </article>
-
-
-
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue";
-import { useUserStore } from "@/store/user";
+import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import { createAdmin, deleteCurrentAdmin, logoutAdmin, updateAdmin } from "@/api/auth";
-
-import type { UserCreatePayload, RoomCreatePayload } from "@/types";
+import { createAdmin, deleteCurrentAdmin } from "@/api/auth";
+import { useUserStore } from "@/store/user";
+import type { UserCreatePayload } from "@/types";
 
 const userStore = useUserStore();
 const router = useRouter();
-// 反馈信息状态
-const sessionFeedback = ref("");
 const deleteFeedback = ref("");
 const adminFeedback = ref("");
-const roomFeedback = ref("");
 
-// 表单数据绑定
 const deleteForm = reactive({ password: "" });
-const userForm = reactive<UserCreatePayload>({ name: "", phone_number: "", identity_number: "", type_: "guest", password: "" });
-const roomForm = reactive<RoomCreatePayload>({ room_number: "", type_: "single", price: "" });
-const adminUpdateForm = reactive({ name: "", password: "" });
-// 处理逻辑
+const userForm = reactive<UserCreatePayload>({
+  name: "",
+  phone_number: "",
+  identity_number: "",
+  type_: "staff",
+  password: "",
+});
 
-const moveToRoomAdmin = () => {
-  router.push("/admin/room");
-};
-const moveToAdmin = () => {
-  router.push("/admin");
-};
-const moveToOrderAdmin = () => {
-  router.push("/admin/order");
-};
-const handleUpdateAdmin = async () => {
-  try {
-    const payload: AdminUpdatePayload = {};
+const moveToRoomAdmin = () => router.push("/admin/room");
+const moveToAdmin = () => router.push("/admin");
+const moveToOrderAdmin = () => router.push("/admin/order");
+const moveToUserAdmin = () => router.push("/admin/user");
 
-    if (adminUpdateForm.name.trim()) {
-      payload.name = adminUpdateForm.name;
-    }
-
-    if (adminUpdateForm.password.trim()) {
-      payload.password = adminUpdateForm.password;
-    }
-
-    await updateAdmin(payload);
-    userStore.logout();
-    router.push("/login");
-  } catch (e : any) {
-    sessionFeedback.value = e.message;
-  }
-};
 const handleDeleteAdmin = async () => {
   try {
     await deleteCurrentAdmin(deleteForm.password);
-    router.push("/login");
-  } catch (e: any) { deleteFeedback.value = e.message; }
+    userStore.logout();
+    await router.push("/login");
+  } catch (e: any) {
+    deleteFeedback.value = e.message;
+  }
 };
 
 const handleCreateAdmin = async () => {
   try {
     const created = await createAdmin(userForm);
     adminFeedback.value = `Created: ${created.name}`;
-  } catch (e: any) { adminFeedback.value = e.message; }
+  } catch (e: any) {
+    adminFeedback.value = e.message;
+  }
 };
-
-
-
 </script>
