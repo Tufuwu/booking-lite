@@ -65,6 +65,8 @@ export type OrderStatus =
   | "CHECKED_IN"
   | "COMPLETED"
   | "CANCELLED"
+  | "CANCELLED_UNPAID"
+  | "CANCELLED_PAID"
   | "REFUNDED";
 
 export interface OrderResponse {
@@ -72,6 +74,8 @@ export interface OrderResponse {
   user_id?: number;
   room_id?: number;
   check_in_time?: string;
+  check_in_date?: string;
+  check_out_date?: string;
   stay_length?: number;
   expense?: number;
   status?: OrderStatus | string;

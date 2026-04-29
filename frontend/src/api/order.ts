@@ -5,6 +5,8 @@ export interface OrderCreatePayload {
   name: string;
   phone_number: string;
   room_number: string;
+  check_in_date?: string;
+  check_out_date?: string;
   stay_length: number;
 }
 

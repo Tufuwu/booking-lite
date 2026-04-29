@@ -44,8 +44,28 @@
               <input v-model="createForm.room_number" placeholder="Example: 110" required />
             </label>
             <label>
+              <span>Check in</span>
+              <input
+                v-model="createForm.check_in_date"
+                type="date"
+                :min="today"
+                required
+                @change="syncStayLength"
+              />
+            </label>
+            <label>
+              <span>Check out</span>
+              <input
+                v-model="createForm.check_out_date"
+                type="date"
+                :min="minCheckOutDate"
+                required
+                @change="syncStayLength"
+              />
+            </label>
+            <label>
               <span>Stay length</span>
-              <input v-model.number="createForm.stay_length" type="number" min="1" required />
+              <input v-model.number="createForm.stay_length" type="number" min="1" readonly required />
             </label>
           </div>
           <button type="submit" :disabled="isCreating">Create order</button>
@@ -132,41 +152,71 @@
       </div>
 
       <div v-else class="data-table">
-        <div class="data-row order-row data-row-head">
+        <div class="data-row admin-order-row data-row-head">
           <span>ID</span>
           <span>Guest</span>
           <span>Room</span>
           <span>Stay</span>
           <span>Expense</span>
           <span>Status</span>
-          <span>Created</span>
+          <span>Dates</span>
           <span>Actions</span>
         </div>
-        <div v-for="order in orders" :key="order.id" class="data-row order-row">
+        <div v-for="order in orders" :key="order.id" class="data-row admin-order-row">
           <strong>#{{ order.id }}</strong>
           <span>{{ order.user?.name || `User ${order.user_id ?? "-"}` }}</span>
           <span>{{ order.room?.room_number || order.room_id || "-" }}</span>
           <span>{{ order.stay_length ?? "-" }} day(s)</span>
           <span>{{ formatMoney(order.expense) }}</span>
           <span class="status-pill">{{ formatStatus(order.status) }}</span>
-          <span>{{ formatDate(order.created_at) }}</span>
+          <span>{{ formatDateRange(order) }}</span>
           <span class="table-actions">
-            <button type="button" class="button-ghost" @click="handleOrderAction(order.id, 'confirm')">
+            <button
+              type="button"
+              class="button-ghost"
+              :disabled="!canRunAction(order, 'confirm')"
+              @click="handleOrderAction(order.id, 'confirm')"
+            >
               Confirm
             </button>
-            <button type="button" class="button-ghost" @click="handleOrderAction(order.id, 'check-in')">
+            <button
+              type="button"
+              class="button-ghost"
+              :disabled="!canRunAction(order, 'check-in')"
+              @click="handleOrderAction(order.id, 'check-in')"
+            >
               Check in
             </button>
-            <button type="button" class="button-ghost" @click="handleOrderAction(order.id, 'check-out')">
+            <button
+              type="button"
+              class="button-ghost"
+              :disabled="!canRunAction(order, 'check-out')"
+              @click="handleOrderAction(order.id, 'check-out')"
+            >
               Check out
             </button>
-            <button type="button" class="button-ghost" @click="handleOrderAction(order.id, 'recalculate')">
+            <button
+              type="button"
+              class="button-ghost"
+              :disabled="!canRunAction(order, 'recalculate')"
+              @click="handleOrderAction(order.id, 'recalculate')"
+            >
               Recalc
             </button>
-            <button type="button" class="button-danger" @click="handleOrderAction(order.id, 'cancel')">
+            <button
+              type="button"
+              class="button-danger"
+              :disabled="!canRunAction(order, 'cancel')"
+              @click="handleOrderAction(order.id, 'cancel')"
+            >
               Cancel
             </button>
-            <button type="button" class="button-danger" @click="handleOrderAction(order.id, 'refund')">
+            <button
+              type="button"
+              class="button-danger"
+              :disabled="!canRunAction(order, 'refund')"
+              @click="handleOrderAction(order.id, 'refund')"
+            >
               Refund
             </button>
           </span>
@@ -201,7 +251,8 @@ const statusOptions: OrderStatus[] = [
   "CONFIRMED",
   "CHECKED_IN",
   "COMPLETED",
-  "CANCELLED",
+  "CANCELLED_UNPAID",
+  "CANCELLED_PAID",
   "REFUNDED",
 ];
 
@@ -216,13 +267,20 @@ const actionFeedback = ref("");
 const filterUserId = ref("");
 const filterStatus = ref<OrderStatus | "">("");
 const lookupOrderId = ref("");
+const today = getDateInputValue(new Date());
 
 const createForm = reactive<OrderCreatePayload>({
   name: "",
   phone_number: "",
   room_number: "",
+  check_in_date: today,
+  check_out_date: getDateInputValue(addDays(new Date(), 1)),
   stay_length: 1,
 });
+
+const minCheckOutDate = computed(() =>
+  getDateInputValue(addDays(parseDateInput(createForm.check_in_date) ?? new Date(), 1)),
+);
 
 const extendForm = reactive({
   order_id: 1,
@@ -235,6 +293,28 @@ const totalRevenue = computed(() =>
 
 const countByStatus = (status: OrderStatus) =>
   orders.value.filter((order) => order.status === status).length;
+
+const allowedActionsByStatus: Record<OrderStatus, OrderAction[]> = {
+  PENDING: ["confirm", "cancel", "recalculate", "extend"],
+  CONFIRMED: ["check-in", "cancel", "recalculate", "extend"],
+  CHECKED_IN: ["check-out", "refund", "recalculate"],
+  COMPLETED: ["recalculate"],
+  CANCELLED: ["recalculate"],
+  CANCELLED_UNPAID: ["recalculate"],
+  CANCELLED_PAID: ["refund", "recalculate"],
+  REFUNDED: ["recalculate"],
+};
+
+const isOrderStatus = (status?: string): status is OrderStatus =>
+  statusOptions.includes(status as OrderStatus);
+
+const canRunAction = (order: OrderResponse, action: OrderAction) => {
+  if (!isOrderStatus(order.status)) {
+    return action === "recalculate";
+  }
+
+  return allowedActionsByStatus[order.status].includes(action);
+};
 
 const handleLoadOrders = async () => {
   isLoading.value = true;
@@ -291,6 +371,8 @@ const handleCreateOrder = async () => {
     createForm.name = "";
     createForm.phone_number = "";
     createForm.room_number = "";
+    createForm.check_in_date = today;
+    createForm.check_out_date = getDateInputValue(addDays(new Date(), 1));
     createForm.stay_length = 1;
     await handleLoadOrders();
   } catch (e: unknown) {
@@ -303,6 +385,13 @@ const handleCreateOrder = async () => {
 const handleOrderAction = async (orderId: number, action: OrderAction) => {
   activeAction.value = action;
   actionFeedback.value = "";
+
+  const order = orders.value.find((item) => item.id === orderId);
+  if (order && !canRunAction(order, action)) {
+    actionFeedback.value = `${formatStatus(order.status)} orders cannot ${action}.`;
+    activeAction.value = "";
+    return;
+  }
 
   try {
     const actionMap = {
@@ -329,6 +418,27 @@ const handleExtendOrder = async () => {
   await handleOrderAction(extendForm.order_id, "extend");
 };
 
+const syncStayLength = () => {
+  const checkIn = parseDateInput(createForm.check_in_date);
+  const checkOut = parseDateInput(createForm.check_out_date);
+
+  if (!checkIn) {
+    createForm.check_in_date = today;
+    return;
+  }
+
+  if (!checkOut || checkOut <= checkIn) {
+    createForm.check_out_date = getDateInputValue(addDays(checkIn, 1));
+    createForm.stay_length = 1;
+    return;
+  }
+
+  createForm.stay_length = Math.max(
+    1,
+    Math.round((checkOut.getTime() - checkIn.getTime()) / 86400000),
+  );
+};
+
 const formatStatus = (status?: string) => {
   if (!status) return "Unknown";
   return status
@@ -353,6 +463,28 @@ const formatDate = (value?: string) => {
   return date.toLocaleDateString();
 };
 
+const formatDateRange = (order: OrderResponse) =>
+  `${formatDate(order.check_in_date ?? order.check_in_time)} - ${formatDate(order.check_out_date)}`;
+
+function parseDateInput(value?: string) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function addDays(value: Date, days: number) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+function getDateInputValue(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const getErrorMessage = (error: unknown) => {
   if (axios.isAxiosError(error)) {
     const detail = error.response?.data?.detail;
@@ -376,3 +508,15 @@ onMounted(() => {
   void handleLoadOrders();
 });
 </script>
+
+<style scoped>
+.admin-order-row {
+  grid-template-columns: 0.5fr 1fr 0.75fr 0.75fr 0.85fr 0.95fr 1.35fr 2.2fr;
+}
+
+@media (max-width: 900px) {
+  .admin-order-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

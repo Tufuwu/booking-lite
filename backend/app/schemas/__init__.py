@@ -1,3 +1,3 @@
-from .User import UserCreate
-from .rooms import RoomCreate
+from .User import UserCreate, UserDelete
+from .Rooms import RoomCreate
 from .Order import OrderCreate, OrderExtend

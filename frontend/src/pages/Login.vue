@@ -51,7 +51,7 @@ const loginForm = ref<LoginPayload>({
 const roleHomeMap: Record<string, string> = {
   admin: "/admin",
   staff: "/admin/order",
-  guest: "/",
+  guest: "/guest",
 };
 
 async function handleLogin() {

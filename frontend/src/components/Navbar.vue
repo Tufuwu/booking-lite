@@ -7,10 +7,11 @@
 
     <div class="nav-links">
       <router-link class="nav-link" to="/">Overview</router-link>
-      <router-link v-if="userStore.isLoggedIn" class="nav-link" to="/admin">Admin</router-link>
-      <router-link v-if="userStore.isLoggedIn" class="nav-link" to="/admin/room">Rooms</router-link>
-      <router-link v-if="userStore.isLoggedIn" class="nav-link" to="/admin/order">Orders</router-link>
-      <router-link v-if="userStore.isLoggedIn" class="nav-link" to="/admin/user">Users</router-link>
+      <router-link v-if="hasRole('guest')" class="nav-link" to="/guest">Guest</router-link>
+      <router-link v-if="hasRole('admin')" class="nav-link" to="/admin">Admin</router-link>
+      <router-link v-if="hasRole('admin')" class="nav-link" to="/admin/room">Rooms</router-link>
+      <router-link v-if="hasAnyRole(['admin', 'staff'])" class="nav-link" to="/admin/order">Orders</router-link>
+      <router-link v-if="hasRole('admin')" class="nav-link" to="/admin/user">Users</router-link>
     </div>
 
     <router-link v-if="!userStore.isLoggedIn" class="nav-link active" to="/login">
@@ -29,6 +30,9 @@ import { useRouter } from "vue-router";
 
 const userStore = useUserStore();
 const router = useRouter();
+
+const hasRole = (role: string) => userStore.roles.includes(role);
+const hasAnyRole = (roles: string[]) => roles.some((role) => hasRole(role));
 
 const handleCheckout = async () => {
   userStore.logout();

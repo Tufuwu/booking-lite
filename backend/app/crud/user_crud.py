@@ -10,6 +10,12 @@ class UserCrud:
         result = await db.execute(select(models.User).filter(models.User.phone_number == phone_number))
         return result.scalar_one_or_none()
 
+    async def get_by_identity_number(self, db: AsyncSession, identity_number: str):
+        result = await db.execute(
+            select(models.User).filter(models.User.identity_number == identity_number)
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_user_id(self, db: AsyncSession, user_id: int):
         result = await db.execute(select(models.User).filter(models.User.id == user_id))
         return result.scalar_one_or_none()
@@ -27,12 +33,16 @@ class UserCrud:
     
     async def create_user(self, db: AsyncSession, user: models.User):
         db.add(user)
-        await db.commit()
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
         await db.refresh(user)
         return user
     
     async def delete_user(self, db: AsyncSession, user: models.User) -> None:
-        db.delete(user)
+        await db.delete(user)
         await db.commit()
 
     async def update_user(self, db: AsyncSession, user: models.User):

@@ -7,19 +7,14 @@ class RoomType(str, Enum):
     FAMILY = "family"
 
 
-class RoomStatus(str, Enum):
-    VACANT = "vacant"
-    OCCUPIED = "occupied"
-    DIRTY = "dirty"
-    RESERVED = "reserved"
-
-
 class OrderStatus(str, Enum):
     PENDING = "PENDING"
     CONFIRMED = "CONFIRMED"
     CHECKED_IN = "CHECKED_IN"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
+    CANCELLED_UNPAID = "CANCELLED_UNPAID"
+    CANCELLED_PAID = "CANCELLED_PAID"
     REFUNDED = "REFUNDED"
 
 

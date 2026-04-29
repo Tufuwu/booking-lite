@@ -1,6 +1,6 @@
 from fastapi import Request, HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 from app import core
 from app import schemas
 from app.db import models
@@ -25,16 +25,19 @@ async def login_user(db: AsyncSession, form_data):
 
 
 async def create_user(db: AsyncSession, user: schemas.UserCreate):
-    is_user_exist: models.Admin = await users.get_by_user_name(db, user.identity_number)
+    if await users.get_by_user_name(db, user.name):
+        raise HTTPException(status_code=409, detail="User name already exists")
 
-    if is_user_exist:
-        return None
+    if await users.get_by_user_phone_number(db, user.phone_number):
+        raise HTTPException(status_code=409, detail="Phone number already exists")
+
+    if await users.get_by_identity_number(db, user.identity_number):
+        raise HTTPException(status_code=409, detail="Identity number already exists")
+
     role = await roles.get_by_name(db, user.role)
     if not role:
         raise ValueError("Role not found")
-    admin_role = await roles.get_by_name(db, user.role)
-    if not admin_role:
-        raise ValueError("Admin role not initialized")
+
     hashed_password = core.security.hash_password(user.password)
 
     new_user = models.User(
@@ -44,7 +47,11 @@ async def create_user(db: AsyncSession, user: schemas.UserCreate):
         hashed_password=hashed_password,
         role_id=role.id
     )
-    return await users.create_user(db, new_user)
+
+    try:
+        return await users.create_user(db, new_user)
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="User already exists")
 
 
 async def get_me(db: AsyncSession, current_user: dict):
@@ -79,7 +86,6 @@ def serialize_room(room: models.Room):
         "room_number": room.room_number,
         "type_": room.type_.value if room.type_ else None,
         "price": room.price,
-        "room_status": room.room_status.value if room.room_status else None,
     }
 
 def serialize_user(user: models.User):

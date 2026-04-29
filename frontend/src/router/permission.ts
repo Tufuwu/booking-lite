@@ -1,60 +1,85 @@
-import router from "./index"
-import { useUserStore } from "@/store/user"
-import { asyncRoutes } from "./dynamicRoutes"
-
-let isRouteAdded = false
+import router from "./index";
+import { useUserStore } from "@/store/user";
+import { asyncRoutes } from "./dynamicRoutes";
 
 router.beforeEach(async (to, from, next) => {
-  const userStore = useUserStore()
+  const userStore = useUserStore();
 
-  // 初始化权限
   if (!userStore.ready) {
-    await userStore.initAuth()
+    await userStore.initAuth();
   }
 
-  const token = userStore.token
+  const token = userStore.token;
+  const roles = userStore.roles ?? [];
 
-  // 未登录
   if (!token && to.path !== "/login") {
-    return next("/login")
+    return next("/login");
   }
 
-  // 已登录访问 login
   if (token && to.path === "/login") {
-    return next("/")
+    return next(getRoleHome(roles));
   }
 
-  // ⭐ 动态路由注入（关键修复）
-  if (!isRouteAdded && token) {
-    const roles = userStore.roles ?? []   // ✅ 防御
-
-    const accessRoutes = filterRoutes(asyncRoutes, roles)
-
-    accessRoutes.forEach(r => router.addRoute(r))
-
-    isRouteAdded = true
-
-    return next({ ...to, replace: true })
+  if (token && ensureAccessRoutes(roles)) {
+    return next({ ...to, replace: true });
   }
 
-  next()
-})
+  if (token && isProtectedPath(to.path) && !canAccess(to, roles)) {
+    return next(getRoleHome(roles));
+  }
 
-/**
- * 根据 roles 过滤路由（安全版）
- */
+  next();
+});
+
 function filterRoutes(routes: any[], roles: string[] = []) {
-  const safeRoles = roles ?? []
+  return routes.filter((route) => {
+    const needRoles = route.meta?.roles;
 
-  return routes.filter(route => {
-    const needRoles = route.meta?.roles
+    if (!needRoles || needRoles.length === 0) return true;
+    if (!Array.isArray(needRoles)) return true;
 
-    // 没有限制 => 放行
-    if (!needRoles || needRoles.length === 0) return true
+    return needRoles.some((role: string) => roles.includes(role));
+  });
+}
 
-    // 防止 some/includes 报错
-    if (!Array.isArray(needRoles)) return true
+function ensureAccessRoutes(roles: string[] = []) {
+  let hasAddedRoute = false;
+  const accessRoutes = filterRoutes(asyncRoutes, roles);
 
-    return needRoles.some((r: string) => safeRoles.includes(r))
-  })
+  accessRoutes.forEach((route) => {
+    if (route.name && !router.hasRoute(route.name)) {
+      router.addRoute(route);
+      hasAddedRoute = true;
+    }
+  });
+
+  return hasAddedRoute;
+}
+
+function canAccess(to: any, roles: string[] = []) {
+  const matchedRoutes = to.matched ?? [];
+
+  if (matchedRoutes.length === 0) {
+    return !isProtectedPath(to.path);
+  }
+
+  return matchedRoutes.every((route: any) => {
+    const needRoles = route.meta?.roles;
+
+    if (!needRoles || needRoles.length === 0) return true;
+    if (!Array.isArray(needRoles)) return true;
+
+    return needRoles.some((role: string) => roles.includes(role));
+  });
+}
+
+function isProtectedPath(path: string) {
+  return path.startsWith("/admin") || path.startsWith("/guest");
+}
+
+function getRoleHome(roles: string[] = []) {
+  if (roles.includes("admin")) return "/admin";
+  if (roles.includes("staff")) return "/admin/order";
+  if (roles.includes("guest")) return "/guest";
+  return "/";
 }
