@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,12 +25,17 @@ async def startup_event():
         await db.commit()  # 确保初始化数据被提交
 
 # 配置 CORS
-origins = [
+default_origins = [
     "http://localhost:8080",
     "http://127.0.0.1:4173",
     "http://localhost:4173",
     "http://localhost:5173",
     "null",
+]
+origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", ",".join(default_origins)).split(",")
+    if origin.strip()
 ]
 
 app.add_middleware(
@@ -44,3 +51,8 @@ app.include_router(admin_router)
 app.include_router(room_router)
 app.include_router(user_router)
 app.include_router(order_router)
+
+
+@app.get("/health", tags=["health"])
+async def health_check():
+    return {"status": "ok"}

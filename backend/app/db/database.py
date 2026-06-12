@@ -1,13 +1,15 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+import os
 
-# 注意：sqlite 异步驱动需要使用 aiosqlite
-DATABASE_URL = "sqlite+aiosqlite:///./hotel_booking.db"
+from sqlalchemy.ext.asyncio import create_async_engine
 
-# 1. 创建异步引擎
+
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./hotel_booking.db")
+
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
+
 engine = create_async_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
+    DATABASE_URL,
+    connect_args=connect_args,
 )
-
-
-
