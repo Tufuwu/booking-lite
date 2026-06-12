@@ -270,11 +270,13 @@ async def create_order(db: AsyncSession, order_in: schemas.OrderCreate, user: mo
 
             db.add(order)
             await db.flush()
+            room_id = room.id
+            order_id = order.id
             await reserve_room_dates(db, order, stay_dates)
 
             await db.commit()
             db.expire_all()
-            await set_availability_cache(room.id, stay_dates, False)
+            await set_availability_cache(room_id, stay_dates, False)
     except HTTPException:
         await db.rollback()
         raise
@@ -282,7 +284,7 @@ async def create_order(db: AsyncSession, order_in: schemas.OrderCreate, user: mo
         await db.rollback()
         raise HTTPException(status_code=409, detail="Room availability changed, please retry")
 
-    order = await get_order_model(db, order.id)
+    order = await get_order_model(db, order_id)
     return serialize_order(order)
 
 
@@ -425,6 +427,7 @@ async def extend_order(
 
     try:
         async with redis_multi_lock(redis_client, room_date_lock_keys(order.room_id, added_dates)):
+            room_id = order.room_id
             order.check_out_date = new_check_out_date
             order.stay_length += extra_days
             order.expense = order.room.price * order.stay_length
@@ -432,7 +435,7 @@ async def extend_order(
 
             await db.commit()
             db.expire_all()
-            await set_availability_cache(order.room_id, added_dates, False)
+            await set_availability_cache(room_id, added_dates, False)
     except HTTPException:
         await db.rollback()
         raise
