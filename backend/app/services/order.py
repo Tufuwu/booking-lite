@@ -12,6 +12,7 @@ from app.core.locks import redis_multi_lock
 from app.db import redis_client
 from app.db import models
 from app.db.enums import OrderStatus
+from app.services.room_cache import room_cache
 
 
 ALLOWED_TRANSITIONS = {
@@ -238,13 +239,9 @@ async def get_order_model(db: AsyncSession, order_id: int):
 
 async def create_order(db: AsyncSession, order_in: schemas.OrderCreate, user: models.User):
     if order_in.room_number:
-        result = await db.execute(
-            select(models.Room).where(models.Room.room_number == order_in.room_number)
-        )
+        room = await room_cache.get_room_by_number(db, order_in.room_number)
     else:
-        result = await db.execute(select(models.Room).where(models.Room.id == order_in.room_id))
-
-    room = result.scalar_one_or_none()
+        room = await room_cache.get_room_by_id(db, order_in.room_id)
 
     if room is None:
         room_ref = order_in.room_number if order_in.room_number else order_in.room_id
@@ -254,23 +251,23 @@ async def create_order(db: AsyncSession, order_in: schemas.OrderCreate, user: mo
         raise HTTPException(status_code=400, detail="Invalid order dates")
 
     stay_dates = list(iter_stay_dates(order_in.check_in_date, order_in.check_out_date))
-    lock_keys = room_date_lock_keys(room.id, stay_dates)
+    room_id = room["id"]
+    lock_keys = room_date_lock_keys(room_id, stay_dates)
 
     try:
         async with redis_multi_lock(redis_client, lock_keys):
             order = models.Order(
                 user_id=user.id,
-                room_id=room.id,
+                room_id=room_id,
                 check_in_date=order_in.check_in_date,
                 check_out_date=order_in.check_out_date,
                 stay_length=order_in.stay_length,
                 status=OrderStatus.PENDING,
-                expense=room.price * order_in.stay_length,
+                expense=room["price"] * order_in.stay_length,
             )
 
             db.add(order)
             await db.flush()
-            room_id = room.id
             order_id = order.id
             await reserve_room_dates(db, order, stay_dates)
 

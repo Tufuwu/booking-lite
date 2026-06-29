@@ -5,6 +5,7 @@ from app import core
 from app import schemas
 from app.db import models
 from app.crud import users, roles, rooms
+from app.services.room_cache import room_cache
 
 
 
@@ -81,12 +82,7 @@ async def get_me(db: AsyncSession, current_user: dict):
 
 
 def serialize_room(room: models.Room):
-    return {
-        "id": room.id,
-        "room_number": room.room_number,
-        "type_": room.type_.value if room.type_ else None,
-        "price": room.price,
-    }
+    return room_cache.serialize_room(room)
 
 def serialize_user(user: models.User):
     return {
@@ -106,7 +102,10 @@ async def create_room(db: AsyncSession, room: schemas.RoomCreate):
         price=float(room.price),
     )
     created_room = await rooms.create_room(db, new_room)
-    return serialize_room(created_room)
+    room_data = serialize_room(created_room)
+    await room_cache.cache_room(room_data)
+    await room_cache.invalidate()
+    return room_data
 
 
 async def delete_room(db: AsyncSession, room_number: str):
@@ -114,13 +113,14 @@ async def delete_room(db: AsyncSession, room_number: str):
     if not room:
         return False
 
+    room_id = room.id
     await rooms.delete_room(db, room)
+    await room_cache.invalidate(room_id=room_id, room_number=room_number)
     return True
 
 
 async def get_all_rooms(db: AsyncSession):
-    room_list = await rooms.get_all_rooms(db)
-    return [serialize_room(room) for room in room_list]
+    return await room_cache.get_all_rooms(db)
 
 
 async def get_all_users(db: AsyncSession):
